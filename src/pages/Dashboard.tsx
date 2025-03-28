@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNote, setSelectedNote] = useState('All');
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const fetchSongs = async () => {
     try {
@@ -28,7 +29,7 @@ export default function Dashboard() {
       if (supabaseError) throw supabaseError;
       setSongs(data || []);
     } catch (err) {
-      setError('Impossible de récupérer les chansons');
+      setError('Unable to fetch songs');
     } finally {
       setLoading(false);
     }
@@ -48,18 +49,27 @@ export default function Dashboard() {
     return matchesSearch && matchesNote;
   });
 
+  const handleAddSong = () => {
+    setShowAddForm(true);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Mes Chansons</h1>
-        <div className="flex items-center gap-4">
-          <AddSongForm onSongAdded={fetchSongs} />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">My Songs</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
+          <button
+            onClick={handleAddSong}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            Add New Song
+          </button>
           <button
             onClick={() => signOut()}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
           >
             <LogOut size={18} />
-            Se déconnecter
+            Sign Out
           </button>
         </div>
       </div>
@@ -78,18 +88,38 @@ export default function Dashboard() {
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-500">Chargement des chansons...</p>
+          <p className="mt-4 text-gray-500">Loading songs...</p>
         </div>
       ) : filteredSongs.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow">
-          <p className="text-gray-500">Aucune chanson trouvée. Ajoutez votre première chanson !</p>
+          <p className="text-gray-500">No songs found. Add your first song!</p>
         </div>
       ) : (
         <SongList songs={filteredSongs} onSongSelect={setSelectedSong} />
       )}
 
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="p-6">
+              <AddSongForm
+                onSongAdded={() => {
+                  fetchSongs();
+                  setShowAddForm(false);
+                }}
+                onCancel={() => setShowAddForm(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedSong && (
-        <SongPlayer song={selectedSong} onClose={() => setSelectedSong(null)} />
+        <SongPlayer
+          song={selectedSong}
+          onClose={() => setSelectedSong(null)}
+          onSongDeleted={fetchSongs}
+        />
       )}
     </div>
   );

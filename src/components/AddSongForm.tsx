@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { SongFormData } from '../types/database.types';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,9 +6,13 @@ import { useAuth } from '../contexts/AuthContext';
 const MUSICAL_NOTES = ['Do', 'Ré', 'Mi', 'Fa', 'Sol', 'La', 'Si'];
 const SCROLL_SPEEDS = ['slow', 'medium', 'fast'] as const;
 
-export default function AddSongForm({ onSongAdded }: { onSongAdded: () => void }) {
+interface AddSongFormProps {
+  onSongAdded: () => void;
+  onCancel: () => void;
+}
+
+export default function AddSongForm({ onSongAdded, onCancel }: AddSongFormProps) {
   const { session } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState<SongFormData>({
@@ -34,13 +37,6 @@ export default function AddSongForm({ onSongAdded }: { onSongAdded: () => void }
 
       if (supabaseError) throw supabaseError;
 
-      setFormData({
-        title: '',
-        lyrics: '',
-        starting_note: 'Do',
-        scroll_speed: 'medium',
-      });
-      setIsOpen(false);
       onSongAdded();
     } catch (err) {
       setError('Failed to add song');
@@ -50,20 +46,8 @@ export default function AddSongForm({ onSongAdded }: { onSongAdded: () => void }
     }
   };
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-      >
-        <PlusCircle size={20} />
-        Add New Song
-      </button>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">Add New Song</h2>
       {error && <div className="text-red-500 mb-4">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -134,7 +118,7 @@ export default function AddSongForm({ onSongAdded }: { onSongAdded: () => void }
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={onCancel}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
           >
             Cancel
